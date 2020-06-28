@@ -5,5 +5,7 @@
  * @returns {object} - returns the new object
  */
 export const omit = (obj, ...fields) => {
-
+  const doubleObj = {};
+  Object.entries(obj).filter(([key, value]) => !fields.includes(key)).map(([key, value]) => doubleObj[key] = value);
+  return doubleObj;
 };
