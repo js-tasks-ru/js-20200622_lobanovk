@@ -65,7 +65,7 @@ describe('oop-basic-intro-to-dom/column-chart', () => {
 
     const chart = columnChart.element.querySelector('.column-chart__chart');
     const columnProps = getColumnProps(data);
-    
+
     expect(chart.childElementCount).toEqual(data.length);
 
     expect(getComputedStyle(chart.children[0]).getPropertyValue('--value')).toEqual(columnProps[0].value);
