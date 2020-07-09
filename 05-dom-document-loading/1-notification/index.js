@@ -19,10 +19,9 @@ export default class NotificationMessage {
     const time = this.duration / 1000;
 
     const element = document.createElement('div');
-    element.setAttribute('class', `notification ${this.type}`);
-    element.setAttribute('style', `--value:${time}s`);
 
-    const content = `
+    element.innerHTML = `
+    <div class="notification ${this.type}" style="--value:${time}s">
       <div class="timer"></div>
       <div class="inner-wrapper">
         <div class="notification-header">${this.type}</div>
@@ -30,16 +29,17 @@ export default class NotificationMessage {
           ${this.message}
         </div>
       </div>
+    <div>
     `
+    
+    const content = element.firstElementChild;
 
-    element.innerHTML = content;
-
-    return element;
+    return content;
   }
 
   
 
-  show(node) {    
+  show(node = document.body) {    
     if (!NotificationMessage.visible) {
       NotificationMessage.visible = true;
       

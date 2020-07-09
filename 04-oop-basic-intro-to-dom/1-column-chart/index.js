@@ -14,12 +14,7 @@ export default class ColumnChart {
 		this.value = value;
 		this.link = link;
 		this.render();
-		// this.initEventListeners();
   }
-
-	// initEventListeners() {
-
-	// }
 
 	getColumnBody (data) {
 		const maxValue = Math.max(...data);

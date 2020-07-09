@@ -111,7 +111,7 @@ export default class SortableTable {
     const data = sortData.sort((firstItem, secondItem) => {
       let result;
       if (sortType === 'string') {
-        result = firstItem[field].localeCompare(secondItem[field], [], {usage: 'sort', caseFirst : "upper"});
+        result = firstItem[field].localeCompare(secondItem[field], 'ru', {usage: 'sort', caseFirst : "upper"});
       } else {
         if (firstItem[field] > secondItem[field]) {
           result = 1
@@ -125,9 +125,7 @@ export default class SortableTable {
       return order === 'asc' ? result : result * -1;
     })
 
-    // this.data = data;
-
-    this.subElements['body'].innerHTML = this.getRowBody(data);
+    this.subElements.body.innerHTML = this.getRowBody(data);
   }
 
   remove() {
