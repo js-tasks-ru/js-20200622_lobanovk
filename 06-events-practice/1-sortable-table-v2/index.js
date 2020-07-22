@@ -7,8 +7,8 @@ export default class SortableTable {
 
     const toogleOrders = order => {
       const orders = {
-        asc: 'asc',
-        desc: 'desc',
+        asc: 'desc',
+        desc: 'asc',
       };
 
       return orders[order];

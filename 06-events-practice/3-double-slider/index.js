@@ -140,6 +140,17 @@ export default class DoubleSlider {
     }, {});
   }
 
+  update() {
+    const rangeTotal = this.max - this.min;
+    const left = Math.floor((this.selected.from - this.min) / rangeTotal * 100) + '%';
+    const right = Math.floor((this.max - this.selected.to) / rangeTotal * 100) + '%';
+
+    this.subElements.progress.style.left = left;
+    this.subElements.progress.style.right = right;
+
+    this.subElements.thumbLeft.style.left = left;
+    this.subElements.thumbRight.style.right = right;
+  }
 
   remove() {
     this.element.remove();
