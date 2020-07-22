@@ -98,7 +98,7 @@ export default class DoubleSlider {
     this.subElements = this.getSubElements(element);
 
     this.initEventListeners(); 
-
+    this.update();
   }
 
   initEventListeners() {
