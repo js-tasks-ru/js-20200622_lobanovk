@@ -10,25 +10,33 @@ export default class ProductForm {
   subActionElements = {};
   product;
 
-  async onLoadInfo(productId) {
+  async onLoadCategories() {
     this.urlCategories.searchParams.set('_sort', 'weight');
     this.urlCategories.searchParams.set('_refs', 'subcategory');
-    this.urlProduct.searchParams.set('id', productId);
+
     const categories = await fetchJson(this.urlCategories);
-    const product = productId ? await fetchJson(this.urlProduct) : null
+
     if (categories && categories.length) {
       const { subcategory } = this.subActionElements;
       subcategory.innerHTML = this.getOptions(categories)
     }
+  }
+
+  async onLoadInfoAboutProduct(productId) {
+    this.urlProduct.searchParams.set('id', productId);
+
+    const product = productId ? await fetchJson(this.urlProduct) : null;
+
     if (product) {
       this.product = product[0];
       for (const prop in this.subActionElements) {
         this.subActionElements[prop].value = this.product[prop];
       }
 
-      this.subElements.imageListContainer.innerHTML = this.getImageListContainer(this.product.images)
+      this.subElements.imageListContainer.innerHTML = this.getImageListContainer(this.product.images);
 
     }
+
   }
 
   constructor(productId = '', url = '') {
@@ -38,7 +46,8 @@ export default class ProductForm {
     this.urlProduct = new URL('api/rest/products', BACKEND_URL);
 
     this.render();
-    this.onLoadInfo(productId);
+    this.onLoadCategories();
+    this.onLoadInfoAboutProduct(productId);
   }
 
   getTitleProduct() {
@@ -111,9 +120,16 @@ export default class ProductForm {
   }
 
   getOptions(categories) {
+
+    const getSelectedOption = (product, id) => {
+      if (!product) return '';
+      if (product.subcategory === id) return 'selected';
+      return '';
+    }
+
     return categories.map(category => {
       const { title: titleCategory, subcategories } = category;
-      return subcategories.map(({id, title}) => `<option ${this.product && this.product.subcategory === id ? 'selected' : ''} value="${id}">${titleCategory} &gt; ${title}</option>`).join('');
+      return subcategories.map(({id, title}) => `<option ${getSelectedOption(this.product, id)} value="${id}">${titleCategory} &gt; ${title}</option>`).join('');
     }).join('');
   }
 
@@ -232,10 +248,6 @@ export default class ProductForm {
 
   saveProductInfo = async (event) => {
     event.preventDefault();
-    this.save();
-  }
-
-  async save() {
     const { title, description, discount, price, quantity, status, subcategory  } = this.subActionElements;
     const body = {
       images: this.product ? this.product.images : [],
@@ -247,11 +259,26 @@ export default class ProductForm {
       status: parseInt(status.value, 10),
       subcategory: subcategory.value,
     }
+    if (this.productId) {
+      body.id = this.productId
+      return this.update(body);
+    } 
+    return this.save(body)
+  }
 
-    if (this.productId) body.id = this.productId
+  async save(body) {
+    return await fetchJson(new URL('api/rest/products', BACKEND_URL), {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }
+    })
+  }
 
-    const response = await fetchJson(new URL('api/rest/products', BACKEND_URL), {
-      method: "POST",
+  async update(body) {
+    return await fetchJson(new URL('api/rest/products', BACKEND_URL), {
+      method: "PUT",
       body: JSON.stringify(body),
       headers: {
         'Content-Type': 'application/json;charset=utf-8'
