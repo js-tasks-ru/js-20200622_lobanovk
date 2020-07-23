@@ -129,7 +129,7 @@ export default class ProductForm {
 
     return categories.map(category => {
       const { title: titleCategory, subcategories } = category;
-      return subcategories.map(({id, title}) => `<option ${getSelectedOption(this.product, id)} value="${id}">${titleCategory} &gt; ${title}</option>`).join('');
+      return subcategories.map(({id, title}) => `<option ${getSelectedOption(this.product, id)} value="${id}">${titleCategory} > ${title}</option>`).join('');
     }).join('');
   }
 
@@ -261,29 +261,39 @@ export default class ProductForm {
     }
     if (this.productId) {
       body.id = this.productId
-      return this.update(body);
     } 
     return this.save(body)
   }
 
   async save(body) {
-    return await fetchJson(new URL('api/rest/products', BACKEND_URL), {
-      method: "PATCH",
+
+    const method = this.productId ? "PUT" : "PATCH"
+
+    const response = await fetchJson(new URL('api/rest/products', BACKEND_URL), {
+      method,
       body: JSON.stringify(body),
       headers: {
         'Content-Type': 'application/json;charset=utf-8'
       }
     })
+
+    if (response) {
+      this.productId ? this.updateDispatchEvent() : this.saveDispatchEvent() 
+    }
   }
 
-  async update(body) {
-    return await fetchJson(new URL('api/rest/products', BACKEND_URL), {
-      method: "PUT",
-      body: JSON.stringify(body),
-      headers: {
-        'Content-Type': 'application/json;charset=utf-8'
-      }
-    })
+  updateDispatchEvent() {
+    this.element.dispatchEvent(new CustomEvent('product-updated', {
+      detail: "Товар обновлен",
+      bubbles: true
+    }))
+  }
+
+  saveDispatchEvent() {
+    this.element.dispatchEvent(new CustomEvent('product-saved', {
+      detail: "Товар создан",
+      bubbles: true
+    }))
   }
 
   initEventListeners() {
