@@ -9,33 +9,29 @@ export default class ProductForm {
   subElements = {};
   subActionElements = {};
   product;
+  categories;
+  defaultFormData = {
+    title: '',
+    description: '',
+    quantity: 1,
+    subcategory: '',
+    status: 1,
+    images: [],
+    price: 100,
+    discount: 0
+  };
 
   async onLoadCategories() {
     this.urlCategories.searchParams.set('_sort', 'weight');
     this.urlCategories.searchParams.set('_refs', 'subcategory');
 
-    const categories = await fetchJson(this.urlCategories);
-
-    if (categories && categories.length) {
-      const { subcategory } = this.subActionElements;
-      subcategory.innerHTML = this.getOptions(categories)
-    }
+    return await fetchJson(this.urlCategories);
   }
 
   async onLoadInfoAboutProduct(productId) {
     this.urlProduct.searchParams.set('id', productId);
 
-    const product = productId ? await fetchJson(this.urlProduct) : null;
-
-    if (product) {
-      this.product = product[0];
-      for (const prop in this.subActionElements) {
-        this.subActionElements[prop].value = this.product[prop];
-      }
-
-      this.subElements.imageListContainer.innerHTML = this.getImageListContainer(this.product.images);
-
-    }
+    return await fetchJson(this.urlProduct);
 
   }
 
@@ -44,10 +40,6 @@ export default class ProductForm {
 
     this.urlCategories = new URL('api/rest/categories', BACKEND_URL);
     this.urlProduct = new URL('api/rest/products', BACKEND_URL);
-
-    this.render();
-    this.onLoadCategories();
-    this.onLoadInfoAboutProduct(productId);
   }
 
   getTitleProduct() {
@@ -55,7 +47,7 @@ export default class ProductForm {
     <div class="form-group form-group__half_left">
       <fieldset>
         <label class="form-label">Название товара</label>
-        <input required="" type="text" name="title" class="form-control" placeholder="Название товара">
+        <input required="" type="text" id="title" name="title" class="form-control" placeholder="Название товара">
       </fieldset>
     </div>
     `
@@ -65,7 +57,7 @@ export default class ProductForm {
     return `
     <div class="form-group form-group__wide">
       <label class="form-label">Описание</label>
-      <textarea required="" class="form-control" name="description" data-element="productDescription" placeholder="Описание товара"></textarea>
+      <textarea required="" class="form-control" id="description" name="description" data-element="productDescription" placeholder="Описание товара"></textarea>
     </div>
     `
   }
@@ -77,7 +69,7 @@ export default class ProductForm {
       <div data-element="imageListContainer">
         ${this.getImageListContainer(images)}
       </div>
-      <button type="button" name="uploadImage" class="button-primary-outline"><span>Загрузить</span></button>
+      <button type="button" id="uploadImage" name="uploadImage" class="button-primary-outline"><span>Загрузить</span></button>
     </div>
     `
   }
@@ -112,7 +104,7 @@ export default class ProductForm {
     return `
       <div class="form-group form-group__half_left">
         <label class="form-label">Категория</label>
-        <select class="form-control" name="subcategory">
+        <select class="form-control" id="subcategory" name="subcategory">
           ${this.getOptions(categories)}
         </select>
       </div>
@@ -138,11 +130,11 @@ export default class ProductForm {
     <div class="form-group form-group__half_left form-group__two-col">
       <fieldset>
         <label class="form-label">Цена ($)</label>
-        <input required="" type="number" name="price" class="form-control" placeholder="100">
+        <input required="" type="number" id="price" name="price" class="form-control" placeholder="100">
       </fieldset>
       <fieldset>
         <label class="form-label">Скидка ($)</label>
-        <input required="" type="number" name="discount" class="form-control" placeholder="0">
+        <input required="" type="number" id="discount" name="discount" class="form-control" placeholder="0">
       </fieldset>
     </div>
     `
@@ -152,7 +144,7 @@ export default class ProductForm {
     return `
       <div class="form-group form-group__part-half">
         <label class="form-label">Количество</label>
-        <input required="" type="number" class="form-control" name="quantity" placeholder="1">
+        <input required="" type="number" class="form-control" id="quantity" name="quantity" placeholder="1">
       </div>
     `
   }
@@ -162,7 +154,7 @@ export default class ProductForm {
     return `
     <div class="form-group form-group__part-half">
       <label class="form-label">Статус</label>
-      <select class="form-control" name="status">
+      <select class="form-control" id="status" name="status">
         <option ${status === 1 ? 'selected' : ''} value="1">Активен</option>
         <option ${status === 0 ? 'selected' : ''} value="0">Неактивен</option>
       </select>
@@ -180,14 +172,14 @@ export default class ProductForm {
     `
   }
 
-  getProductForm() {
+  getProductForm(categories) {
     return `
       <form data-element="productForm" class="form-grid">
         <div class="form-group form-group__half_left">
-            ${this.getTitleProduct('title')}
-            ${this.getDescriptionProduct('description')}
+            ${this.getTitleProduct()}
+            ${this.getDescriptionProduct()}
             ${this.getImagesProduct()}
-            ${this.getCategoriesProduct()}
+            ${this.getCategoriesProduct(categories)}
             ${this.getPriceAndDiscount()}
             ${this.getCountProduct()}
             ${this.getStatusProduct()}
@@ -197,15 +189,42 @@ export default class ProductForm {
     `
   }
 
-  render() {
+  async render() {
+    const categoriesPromise = this.onLoadCategories();
+    const productPromise = this.productId ? this.onLoadInfoAboutProduct(this.productId) 
+                                          : Promise.resolve([this.defaultFormData]);
+
+    const [caregoriesData, productData] = await Promise.all([categoriesPromise, productPromise]);
+
+
+    this.categories = caregoriesData;
+
+    this.renderForm();
+    this.initEventListeners();
+
+    // if (caregoriesData && caregoriesData.length) {
+    //   const { subcategory } = this.subActionElements;
+    //   subcategory.innerHTML = this.getOptions(caregoriesData)
+    // }
+    if (productData) {
+      this.product = productData[0];
+      for (const prop in this.subActionElements) {
+        this.subActionElements[prop].value = this.product[prop];
+      }
+      this.subElements.imageListContainer.innerHTML = this.getImageListContainer(this.product.images);
+    }
+
+    return this.element;
+  }
+
+  renderForm() {
     const wrapper = document.createElement('div');
     wrapper.classList.add('.product-form');
-    wrapper.innerHTML = this.getProductForm();
+    wrapper.innerHTML = this.getProductForm(this.categories);
 
     this.element = wrapper;
     this.subElements = this.getSubElements(wrapper);
     this.subActionElements = this.getSubActionElements(wrapper);
-    this.initEventListeners();
   }
 
   onUploadImage = (event) => {
